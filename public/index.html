@@ -1,0 +1,1587 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>🕸️ Ito 命懸一線｜團契破冰默契遊戲</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --game-pink-bg: #F08CAE;
+      --game-pink-btn: #E63E7A;
+      --game-yellow-bg: #F3C242;
+      --game-brown-text: #4A3222;
+      --game-orange-bg: #EA6A00;
+      --game-blue-bg: #1EA1E8;
+      --game-blue-tag: #0D74B8;
+      --game-green-bg: #5CB346;
+      --game-taupe-bg: #916E57;
+    }
+    body {
+      font-family: 'Noto Sans TC', 'PingFang HK', sans-serif;
+      background-color: var(--game-pink-bg);
+      color: var(--game-brown-text);
+      overflow-x: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .dashed-divider {
+      border-top: 6px dashed rgba(255, 255, 255, 0.85);
+    }
+    .section-badge {
+      background-color: var(--game-pink-btn);
+      color: #FFFFFF;
+      border: 3px solid #FFFFFF;
+      border-radius: 9999px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .game-card {
+      background: #FFFFFF;
+      border-radius: 28px;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.10);
+    }
+    .game-card-active {
+      outline: 4px solid #FFFFFF;
+      outline-offset: 4px;
+    }
+    .pill-btn {
+      border-radius: 9999px;
+      transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .pill-btn:active {
+      transform: scale(0.95);
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-8px) rotate(-2deg); }
+      40%, 80% { transform: translateX(8px) rotate(2deg); }
+    }
+    .animate-shake {
+      animation: shake 0.45s ease-in-out;
+    }
+    @keyframes popIn {
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .animate-pop {
+      animation: popIn 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+  <!-- TOP NAVBAR (Neutral Cross-Fellowship Branding) -->
+  <header class="w-full px-4 py-3 bg-white/95 backdrop-blur sticky top-0 z-40 shadow-md">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-3">
+        <span class="text-3xl md:text-4xl">🕸️</span>
+        <div>
+          <h1 class="text-xl md:text-2xl font-black tracking-tight text-[#4A3222] flex items-center gap-2">
+            Ito 命懸一線
+            <span id="navRoomBadge" class="text-xs md:text-sm px-3 py-0.5 rounded-full bg-[#1EA1E8] text-white font-bold">房號: ----</span>
+          </h1>
+          <p id="connStatusText" class="text-xs font-bold text-[#916E57]">⚡ 準備連線中...</p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <button onclick="openModal('qrModal')" class="pill-btn px-3.5 py-1.5 bg-[#0D74B8] text-white font-bold text-sm shadow hover:opacity-95 flex items-center gap-1">
+          📱 QR Code
+        </button>
+        <button onclick="openModal('rulesModal')" class="pill-btn px-3.5 py-1.5 bg-[#F3C242] text-[#4A3222] font-bold text-sm shadow hover:opacity-95">
+          📖 規則
+        </button>
+        <button onclick="openModal('topicModal')" class="pill-btn px-3.5 py-1.5 bg-[#5CB346] text-white font-bold text-sm shadow hover:opacity-95">
+          ⚙️ 設定/題庫
+        </button>
+        <button onclick="openModal('hostModal')" class="pill-btn px-3.5 py-1.5 bg-[#EA6A00] text-white font-bold text-sm shadow hover:opacity-95">
+          🛠️ 主持後台
+        </button>
+        <button onclick="confirmResetGame()" class="pill-btn px-3.5 py-1.5 bg-gray-200 text-[#4A3222] font-bold text-sm hover:bg-gray-300">
+          🔄 重開
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-1 w-full max-w-7xl mx-auto px-4 py-6 space-y-6">
+
+    <!-- ROLE SWITCHER / ENTRY BANNER -->
+    <div id="roleSelectionBar" class="game-card p-5 md:p-6 border-4 border-white">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-2xl bg-[#F3C242] flex items-center justify-center text-2xl font-black shadow">🎮</div>
+          <div>
+            <h2 class="text-lg md:text-xl font-black">選擇你嘅畫面模式（支援多機即時同步）</h2>
+            <p class="text-xs md:text-sm text-gray-600 font-bold">大螢幕請揀「🖥️ 主持投影幕」；團友用手機掃描 QR Code 後會自動進入「📱 團友手牌端」。</p>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end">
+          <button id="btnSwitchHost" onclick="switchViewRole('HOST')" class="flex-1 md:flex-none pill-btn px-5 py-2.5 font-black text-sm shadow-md bg-[#E63E7A] text-white">
+            🖥️ 主持大螢幕
+          </button>
+          <button id="btnSwitchPlayer" onclick="switchViewRole('PLAYER')" class="flex-1 md:flex-none pill-btn px-5 py-2.5 font-black text-sm shadow-md bg-[#1EA1E8] text-white">
+            📱 團友手機端
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VIEW 1: HOST / PROJECTOR BIG SCREEN VIEW   -->
+    <!-- ========================================== -->
+    <section id="hostViewSection" class="space-y-6">
+
+      <!-- STATUS BADGE & HEARTS BAR -->
+      <div class="flex flex-col md:flex-row items-center justify-between gap-4 bg-[#1EA1E8] p-4 md:p-5 rounded-3xl border-4 border-white shadow-lg text-white">
+        <div class="flex flex-wrap items-center gap-3">
+          <span id="hostModeBadge" class="px-4 py-1.5 rounded-full bg-[#0D74B8] font-black text-sm md:text-base border-2 border-white">
+            🕸️ 蛛絲馬跡・合作排序
+          </span>
+          <span id="hostLevelBadge" class="px-4 py-1.5 rounded-full bg-[#F3C242] text-[#4A3222] font-black text-sm md:text-base border-2 border-white">
+            🎯 第 1 關（每人 1 張卡）
+          </span>
+        </div>
+
+        <!-- HEARTS DISPLAY -->
+        <div class="flex items-center gap-3 bg-white/20 px-5 py-2 rounded-full border-2 border-white/60">
+          <span class="font-black text-sm md:text-base">團隊生命值：</span>
+          <div id="heartsContainer" class="flex items-center gap-1 text-2xl md:text-3xl">
+            ❤️❤️❤️❤️❤️
+          </div>
+          <div class="flex items-center gap-1 ml-2">
+            <button onclick="sendAction({action:'ADJUST_LIVES', delta:-1})" title="扣 1 血" class="w-7 h-7 rounded-full bg-black/30 hover:bg-black/50 text-white font-black text-sm">-1</button>
+            <button onclick="sendAction({action:'ADJUST_LIVES', delta:1})" title="補 1 血" class="w-7 h-7 rounded-full bg-black/30 hover:bg-black/50 text-white font-black text-sm">+1</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TOPIC BANNER CARD -->
+      <div class="game-card p-6 md:p-8 border-4 border-[#F3C242] relative overflow-hidden">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <span id="topicCategoryTag" class="px-4 py-1 rounded-full bg-[#F3C242] text-[#4A3222] font-black text-sm md:text-base">
+            🍽️ 飲食日常
+          </span>
+          <div class="flex items-center gap-2">
+            <button onclick="pickRandomTopic()" class="pill-btn px-4 py-1.5 bg-[#0D74B8] text-white font-bold text-sm shadow hover:opacity-95">
+              🎲 隨機換題
+            </button>
+            <button onclick="openModal('topicModal')" class="pill-btn px-4 py-1.5 bg-gray-100 text-[#4A3222] font-bold text-sm hover:bg-gray-200">
+              📂 揀選題庫
+            </button>
+          </div>
+        </div>
+
+        <h2 id="topicTitleDisplay" class="text-2xl md:text-5xl font-black text-[#4A3222] tracking-tight my-3 leading-tight">
+          「放工/放學最想食嘅宵夜」
+        </h2>
+
+        <!-- 1 TO 100 SCALE BAR -->
+        <div class="mt-5 grid grid-cols-1 md:grid-cols-12 items-center gap-3 bg-amber-50 p-4 rounded-2xl border-2 border-[#F3C242]">
+          <div class="md:col-span-5 flex items-center gap-2">
+            <span class="px-3 py-1 rounded-xl bg-[#1EA1E8] text-white font-black text-lg shadow">1</span>
+            <span id="topicMinDisplay" class="font-black text-base md:text-lg text-[#0D74B8]">減肥白烚菜 / 狗都唔食</span>
+          </div>
+          <div class="md:col-span-2 text-center font-black text-[#916E57] text-lg hidden md:block">
+            ◀ ────── ▶
+          </div>
+          <div class="md:col-span-5 flex items-center justify-end gap-2 text-right">
+            <span id="topicMaxDisplay" class="font-black text-base md:text-lg text-[#E63E7A]">聽日世界末日都要食</span>
+            <span class="px-3 py-1 rounded-xl bg-[#E63E7A] text-white font-black text-lg shadow">100</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="dashed-divider my-4"></div>
+
+      <!-- LINEUP TRACK SECTION -->
+      <div class="space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="section-badge px-6 py-2 font-black text-lg md:text-xl flex items-center gap-2">
+            <span>🛤️</span>
+            <span id="trackHeaderTitle">命懸一線排序軌道（由細至大 1 ➔ 100）</span>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <button onclick="startNewRound()" class="pill-btn px-5 py-2.5 bg-[#5CB346] text-white font-black text-sm md:text-base shadow-lg border-2 border-white">
+              🃏 派發新一局手牌
+            </button>
+            <button onclick="sendAction({action:'FORCE_ADD_UNSUBMITTED'})" class="pill-btn px-4 py-2.5 bg-[#0D74B8] text-white font-bold text-sm shadow border-2 border-white" title="幫未撳送出嘅團友直接將手牌放上軌道">
+              📥 全員手牌上軌
+            </button>
+            <button onclick="triggerRevealNext()" class="pill-btn px-6 py-2.5 bg-[#EA6A00] text-white font-black text-sm md:text-base shadow-lg border-2 border-white animate-pulse">
+              ⚡ 逐張揭曉結算
+            </button>
+          </div>
+        </div>
+
+        <!-- CARDS TRACK CONTAINER -->
+        <div id="lineupTrackContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 min-h-[220px] p-4 rounded-3xl bg-white/30 border-4 border-dashed border-white">
+          <!-- Dynamically populated by JS -->
+        </div>
+      </div>
+
+      <!-- CONNECTED PLAYERS BAR -->
+      <div class="game-card p-5 border-4 border-white">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <h3 class="font-black text-lg flex items-center gap-2">
+            <span>👥 已入房團友</span>
+            <span id="playerCountBadge" class="px-3 py-0.5 rounded-full bg-[#0D74B8] text-white text-xs font-black">0 人</span>
+          </h3>
+          <div class="flex items-center gap-2">
+            <button onclick="sendAction({action:'ADD_BOT'})" class="pill-btn px-3 py-1 bg-amber-100 text-[#4A3222] font-bold text-xs hover:bg-amber-200">
+              ➕ 加入測試團友 (模擬多人)
+            </button>
+            <button onclick="openModal('qrModal')" class="pill-btn px-3 py-1 bg-[#1EA1E8] text-white font-bold text-xs">
+              📱 顯示入房 QR Code
+            </button>
+          </div>
+        </div>
+        <div id="playersListContainer" class="flex flex-wrap gap-2">
+          <!-- Player badges -->
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW 2: PLAYER MOBILE HAND VIEW            -->
+    <!-- ========================================== -->
+    <section id="playerViewSection" class="hidden max-w-lg mx-auto space-y-5">
+
+      <!-- PLAYER JOIN / PROFILE CARD -->
+      <div class="game-card p-5 border-4 border-white">
+        <div class="flex items-center justify-between gap-2 mb-3">
+          <span class="px-3 py-1 rounded-full bg-[#0D74B8] text-white font-black text-xs">
+            📱 團友手牌端 (房號: <span id="mobileRoomCodeLabel">----</span>)
+          </span>
+          <button onclick="switchViewRole('HOST')" class="text-xs font-bold text-[#E63E7A] underline">
+            切換回大螢幕
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <input id="playerNameInput" type="text" maxlength="12" placeholder="輸入你嘅名（如：阿明）"
+            class="flex-1 px-4 py-2.5 rounded-2xl border-2 border-gray-300 font-black text-[#4A3222] focus:outline-none focus:border-[#E63E7A]" />
+          <button onclick="updatePlayerIdentity()" class="pill-btn px-5 py-2.5 bg-[#E63E7A] text-white font-black text-sm shadow">
+            確認入房
+          </button>
+        </div>
+      </div>
+
+      <!-- COMPACT TOPIC REMINDER -->
+      <div class="game-card p-5 border-4 border-[#F3C242]">
+        <div class="text-xs font-black text-[#916E57] mb-1" id="mobileTopicCat">🍽️ 飲食日常</div>
+        <div class="text-xl font-black text-[#4A3222] mb-2" id="mobileTopicTitle">「放工/放學最想食嘅宵夜」</div>
+        <div class="flex items-center justify-between text-xs font-bold bg-amber-50 p-2.5 rounded-xl border border-[#F3C242]">
+          <span class="text-[#0D74B8]" id="mobileTopicMin">1: 減肥白烚菜</span>
+          <span>↔</span>
+          <span class="text-[#E63E7A]" id="mobileTopicMax">100: 末日都要食</span>
+        </div>
+      </div>
+
+      <!-- SECRET NUMBER CARD (HOLD TO PEEK) -->
+      <div id="mobileHandContainer" class="space-y-4">
+        <!-- Dynamically rendered secret cards -->
+      </div>
+
+      <!-- MOBILE QUICK REORDER (ALLOW PLAYERS TO HELP REORDER) -->
+      <div class="game-card p-5 border-4 border-white">
+        <h3 class="font-black text-base mb-2 flex items-center justify-between">
+          <span>🛤️ 場上當前排序（可協助調位）</span>
+          <span class="text-xs text-gray-500">1 (細) ➔ 100 (大)</span>
+        </h3>
+        <div id="mobileLineupList" class="space-y-2">
+          <!-- Compact mobile lineup -->
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="w-full py-4 px-4 bg-[#916E57] text-white text-center text-xs font-bold mt-8">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+      <span>🕸️ Ito 命懸一線 (Web Edition) — 跨團契通用破冰遊戲系統</span>
+      <span>支援 Cloudflare Pages + Workers Durable Objects 即時同步</span>
+    </div>
+  </footer>
+
+  <!-- ========================================== -->
+  <!-- MODAL 1: QR CODE & ROOM CONNECTION         -->
+  <!-- ========================================== -->
+  <div id="qrModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="game-card max-w-md w-full p-6 text-center space-y-4 animate-pop border-4 border-[#1EA1E8]">
+      <div class="flex items-center justify-between">
+        <h3 class="text-xl font-black text-[#4A3222]">📱 團友掃描 QR Code 入房</h3>
+        <button onclick="closeModal('qrModal')" class="w-8 h-8 rounded-full bg-gray-200 font-black">✕</button>
+      </div>
+
+      <div class="bg-[#F3C242] py-2 px-4 rounded-2xl font-black text-lg text-[#4A3222]">
+        房間號碼：<span id="qrRoomCodeBig" class="text-2xl tracking-widest">8824</span>
+      </div>
+
+      <!-- INLINE SVG QR CODE / SHARE LINK -->
+      <div class="flex flex-col items-center justify-center p-4 bg-white rounded-2xl border-2 border-gray-200">
+        <img id="qrCodeImg" alt="Room QR Code" class="w-56 h-56 mx-auto rounded-xl" />
+        <p id="qrJoinUrlText" class="text-xs text-gray-500 font-bold break-all mt-2"></p>
+      </div>
+
+      <div class="text-left bg-blue-50 p-3 rounded-xl border border-blue-200 space-y-2">
+        <label class="block text-xs font-black text-[#0D74B8]">🔗 Cloudflare Worker 同步伺服器網址 (Mode C)：</label>
+        <div class="flex gap-2">
+          <input id="workerUrlInput" type="text" placeholder="wss://ito-game.ymtwill.workers.dev"
+            class="flex-1 px-3 py-1.5 text-xs rounded-xl border border-blue-300 font-bold" />
+          <button onclick="saveWorkerUrlAndReconnect()" class="pill-btn px-3 py-1.5 bg-[#0D74B8] text-white text-xs font-black">
+            連線
+          </button>
+        </div>
+        <p class="text-[11px] text-gray-600">💡 如未填入外部 Worker，系統會自動啟用「同機多頁籤即時同步 + 主持派牌模式」，保證團契現場 100% 順暢運作！</p>
+      </div>
+
+      <div class="flex gap-2">
+        <button onclick="copyJoinLink()" class="flex-1 pill-btn py-2.5 bg-[#1EA1E8] text-white font-black text-sm">
+          📋 複製入房連結
+        </button>
+        <button onclick="closeModal('qrModal')" class="flex-1 pill-btn py-2.5 bg-[#E63E7A] text-white font-black text-sm">
+          關閉視窗
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL 2: RULES MODAL                       -->
+  <!-- ========================================== -->
+  <div id="rulesModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="game-card max-w-2xl w-full p-6 space-y-4 max-h-[88vh] overflow-y-auto animate-pop border-4 border-[#F3C242]">
+      <div class="flex items-center justify-between">
+        <h3 class="text-2xl font-black text-[#4A3222]">📖 《Ito 命懸一線》破冰玩法規則</h3>
+        <button onclick="closeModal('rulesModal')" class="w-8 h-8 rounded-full bg-gray-200 font-black">✕</button>
+      </div>
+
+      <div class="space-y-3 text-sm md:text-base font-bold leading-relaxed">
+        <div class="p-4 rounded-2xl bg-pink-50 border-2 border-[#E63E7A]">
+          <h4 class="font-black text-lg text-[#E63E7A] mb-1">🚫 唯一鐵則：嚴禁直接講出數字！</h4>
+          <p>每位團友每局會喺手機抽一張 <span class="text-[#E63E7A] font-black">1 至 100</span> 嘅秘密數字卡。大家只能根據大螢幕嘅「主題刻度」用事物去形容自己個數字！</p>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-blue-50 border-2 border-[#1EA1E8]">
+          <h4 class="font-black text-lg text-[#0D74B8] mb-1">🕸️ 模式一：蛛絲馬跡（經典全體合作排序）</h4>
+          <ol class="list-decimal list-inside space-y-1">
+            <li>大螢幕抽出主題（例如：「最想食嘅宵夜」，1 係白烚菜，100 係日本 A5 和牛）。</li>
+            <li>每位團友喺手機長按偷睇自己個秘密數字，再輸入形容詞送出上大螢幕。</li>
+            <li>全體團友一齊討論，將軌道上嘅卡牌由左至右，由細至大（1 ➔ 100）排好。</li>
+            <li>撳「⚡ 逐張揭曉結算」。如果新揭曉嘅數字細過之前出過嘅最大數字，團隊就扣 1 點生命。保住性命再派新一局就會升一級。</li>
+          </ol>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-amber-50 border-2 border-[#F3C242]">
+          <h4 class="font-black text-lg text-[#EA6A00] mb-1">🧶 模式二：紅線配對（雙人湊 100 默契考驗）</h4>
+          <p>大家各自形容自己個數字，目標係搵出全場同自己個數字 **加埋最接近 100** 嘅拍檔排喺一齊（第 1、2 位一組，第 3、4 位一組）！</p>
+        </div>
+      </div>
+
+      <button onclick="closeModal('rulesModal')" class="w-full pill-btn py-3 bg-[#E63E7A] text-white font-black text-base">
+        明晒！開波！
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL 3: TOPIC BANK & EDITOR MODAL         -->
+  <!-- ========================================== -->
+  <div id="topicModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="game-card max-w-3xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto animate-pop border-4 border-[#5CB346]">
+      <div class="flex items-center justify-between">
+        <h3 class="text-2xl font-black text-[#4A3222]">⚙️ 遊戲模式與香港貼地題庫 (64+ 題)</h3>
+        <button onclick="closeModal('topicModal')" class="w-8 h-8 rounded-full bg-gray-200 font-black">✕</button>
+      </div>
+
+      <!-- MODE & DIFFICULTY CONFIG -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-gray-50 p-4 rounded-2xl border-2 border-gray-200">
+        <div>
+          <label class="block text-xs font-black mb-1">🎮 遊戲玩法模式</label>
+          <select id="configModeSelect" onchange="applyHostConfig()" class="w-full p-2.5 rounded-xl border-2 border-gray-300 font-black text-sm">
+            <option value="KUMONOITO">🕸️ 蛛絲馬跡 (合作由細至大)</option>
+            <option value="AKAIITO">🧶 紅線配對 (雙人加總湊 100)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-black mb-1">🃏 每人派牌張數 (難度)</label>
+          <select id="configCardsSelect" onchange="applyHostConfig()" class="w-full p-2.5 rounded-xl border-2 border-gray-300 font-black text-sm">
+            <option value="1">每人 1 張牌 (破冰推薦 8-16人)</option>
+            <option value="2">每人 2 張牌 (進階挑戰)</option>
+            <option value="3">每人 3 張牌 (地獄難度)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-black mb-1">❤️ 團隊起始生命值</label>
+          <select id="configLivesSelect" onchange="applyHostConfig()" class="w-full p-2.5 rounded-xl border-2 border-gray-300 font-black text-sm">
+            <option value="3">3 點 ❤️❤️❤️ (標準)</option>
+            <option value="5" selected>5 點 ❤️❤️❤️❤️❤️ (多人團契推薦)</option>
+            <option value="8">8 點 (歡樂無限復活)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- CUSTOM TOPIC CREATOR -->
+      <div class="bg-amber-50 p-4 rounded-2xl border-2 border-[#F3C242] space-y-2">
+        <h4 class="font-black text-sm text-[#4A3222]">✍️ 即場自訂新題目</h4>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+          <input id="customTopicTitle" type="text" placeholder="題目（如：最驚嘅昆蟲/動物）" class="px-3 py-2 rounded-xl border font-bold text-sm" />
+          <input id="customTopicMin" type="text" placeholder="1 = 完全唔驚（如：螞蟻）" class="px-3 py-2 rounded-xl border font-bold text-sm" />
+          <input id="customTopicMax" type="text" placeholder="100 = 嚇到暈低（如：飛天曱甴）" class="px-3 py-2 rounded-xl border font-bold text-sm" />
+        </div>
+        <div class="flex justify-end gap-2">
+          <button onclick="useCustomTopic()" class="pill-btn px-4 py-1.5 bg-[#E63E7A] text-white font-black text-xs">
+            ✨ 即刻採用呢題並儲存
+          </button>
+        </div>
+      </div>
+
+      <!-- CATEGORY FILTER & TOPIC LIST -->
+      <div class="space-y-2">
+        <div class="flex flex-wrap gap-2" id="categoryFilterBar">
+          <!-- Populated by JS -->
+        </div>
+        <div id="topicBankGrid" class="grid grid-cols-1 md:grid-cols-2 gap-2.5 max-h-64 overflow-y-auto p-1">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- JSON IMPORT / EXPORT -->
+      <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t">
+        <div class="flex gap-2">
+          <button onclick="exportTopicsJSON()" class="pill-btn px-3 py-1.5 bg-gray-200 text-xs font-black">⬇️ 匯出題庫 JSON</button>
+          <label class="pill-btn px-3 py-1.5 bg-gray-200 text-xs font-black cursor-pointer">
+            ⬆️ 匯入題庫 JSON
+            <input type="file" accept=".json" onchange="importTopicsJSON(event)" class="hidden" />
+          </label>
+        </div>
+        <button onclick="closeModal('topicModal')" class="pill-btn px-6 py-2 bg-[#5CB346] text-white font-black text-sm">完成</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL 4: HOST GOD-MODE & ZIP EXPORT        -->
+  <!-- ========================================== -->
+  <div id="hostModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="game-card max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto animate-pop border-4 border-[#EA6A00]">
+      <div class="flex items-center justify-between">
+        <h3 class="text-2xl font-black text-[#4A3222]">🛠️ 主持控制後台 (Host God-Mode)</h3>
+        <button onclick="closeModal('hostModal')" class="w-8 h-8 rounded-full bg-gray-200 font-black">✕</button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div class="p-4 rounded-2xl bg-orange-50 border-2 border-[#EA6A00] space-y-2">
+          <h4 class="font-black text-base text-[#EA6A00]">⚡ 現場控場快捷鍵</h4>
+          <div class="flex flex-wrap gap-2">
+            <button onclick="sendAction({action:'ADJUST_LIVES', delta:1})" class="pill-btn px-3 py-1.5 bg-[#5CB346] text-white text-xs font-black">❤️ 補 1 滴血</button>
+            <button onclick="sendAction({action:'ADJUST_LIVES', delta:-1})" class="pill-btn px-3 py-1.5 bg-[#EA6A00] text-white text-xs font-black">💔 扣 1 滴血</button>
+            <button onclick="toggleHostPeek()" id="btnHostPeek" class="pill-btn px-3 py-1.5 bg-[#0D74B8] text-white text-xs font-black">👁️ 主持偷睇全場底牌: 關</button>
+            <button onclick="changeRoomCodePrompt()" class="pill-btn px-3 py-1.5 bg-gray-700 text-white text-xs font-black">🔑 更改房號</button>
+          </div>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-blue-50 border-2 border-[#1EA1E8] space-y-2">
+          <h4 class="font-black text-base text-[#0D74B8]">📦 專案部署懶人包匯出</h4>
+          <p class="text-xs text-gray-600 font-bold">一鍵下載 `README.md` (Grok Build 部署指南) 或完整原始碼：</p>
+          <div class="flex flex-wrap gap-2">
+            <button onclick="downloadDeploymentFile('README.md')" class="pill-btn px-3 py-1.5 bg-[#E63E7A] text-white text-xs font-black">📘 下載 README.md</button>
+            <button onclick="downloadDeploymentFile('worker.js')" class="pill-btn px-3 py-1.5 bg-[#0D74B8] text-white text-xs font-black">⚙️ 下載 worker.js</button>
+            <button onclick="downloadDeploymentFile('wrangler.toml')" class="pill-btn px-3 py-1.5 bg-[#4A3222] text-white text-xs font-black">📄 下載 wrangler.toml</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MANUAL PLAYER & CARD MANAGEMENT -->
+      <div class="p-4 rounded-2xl bg-gray-50 border-2 border-gray-200 space-y-2">
+        <h4 class="font-black text-sm">👥 團友名單管理（可踢走斷線名單或代團友入牌）</h4>
+        <div id="hostPlayerManagerList" class="space-y-1.5 max-h-48 overflow-y-auto">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <button onclick="closeModal('hostModal')" class="w-full pill-btn py-2.5 bg-[#4A3222] text-white font-black text-sm">
+        關閉後台
+      </button>
+    </div>
+  </div>
+
+  <script>
+    /********************************************************************
+     * 1. BUILT-IN HONG KONG FELLOWSHIP TOPIC BANK (64 TOPICS)
+     ********************************************************************/
+    const DEFAULT_TOPICS = [
+      // 🍽️ 飲食日常
+      { category: "🍽️ 飲食日常", title: "放工/放學最想食嘅宵夜", minLabel: "1 = 減肥白烚菜 / 完全唔想食", maxLabel: "100 = 聽日世界末日都要食" },
+      { category: "🍽️ 飲食日常", title: "茶餐廳最受歡迎嘅飲品/碟頭飯", minLabel: "1 = 永遠唔會叫", maxLabel: "100 = 每次去必嗌神級美食" },
+      { category: "🍽️ 飲食日常", title: "打邊爐最應該落嘅火鍋配料", minLabel: "1 = 放落煲會俾人鬧", maxLabel: "100 = 無佢唔算打邊爐" },
+      { category: "🍽️ 飲食日常", title: "各種食物嘅「邪惡/肥膩」程度", minLabel: "1 = 零卡路里健康水", maxLabel: "100 = 食一啖肥三磅" },
+      { category: "🍽️ 飲食日常", title: "去日本旅行必食嘅美食", minLabel: "1 = 香港食都一樣", maxLabel: "100 = 排隊三個鐘都要食" },
+      { category: "🍽️ 飲食日常", title: "香港街頭小食嘅吸引程度", minLabel: "1 = 行過都唔望", maxLabel: "100 = 隔條街聞到都流口水" },
+      { category: "🍽️ 飲食日常", title: "壽司郎/迴轉壽司必拿嘅壽司", minLabel: "1 = 轉到乾晒無人吼", maxLabel: "100 = 一坐低即撳三碟" },
+      { category: "🍽️ 飲食日常", title: "雪櫃入面出現會最開心嘅零食/甜品", minLabel: "1 = 擺過期都無人食", maxLabel: "100 = 半夜偷食幸福感爆棚" },
+
+      // ⛪ 團契與生活
+      { category: "⛪ 團契與生活", title: "團契破冰/退修營最想玩嘅活動", minLabel: "1 = 聽到都想早退", maxLabel: "100 = 玩通宵都仲精神" },
+      { category: "⛪ 團契與生活", title: "日常生活最令人崩潰嘅小事", minLabel: "1 = 笑下就算完全無感", maxLabel: "100 = 即刻想原地爆炸" },
+      { category: "⛪ 團契與生活", title: "返工/返學遲到最離譜嘅藉口", minLabel: "1 = 誠實可靠個個信", maxLabel: "100 = 講出嚟自己都笑" },
+      { category: "⛪ 團契與生活", title: "星期日放假最理想嘅叉電活動", minLabel: "1 = 越做越攰似返工", maxLabel: "100 = 身心靈完全回血" },
+      { category: "⛪ 團契與生活", title: "去露營/退修營最必備嘅物品", minLabel: "1 = 帶咗等於廢物重物", maxLabel: "100 = 無咗佢直頭生存唔到" },
+      { category: "⛪ 團契與生活", title: "做家務嘅痛苦指數", minLabel: "1 = 療癒身心好鍾意做", maxLabel: "100 = 寧願課金請人搞掂" },
+      { category: "⛪ 團契與生活", title: "交換禮物最想收到 vs 最伏嘅禮物", minLabel: "1 = 收到即刻想轉贈別人", maxLabel: "100 = 抽中會全場尖叫羨慕" },
+      { category: "⛪ 團契與生活", title: "香港夏天令人難受嘅事物", minLabel: "1 = 涼浸浸好舒服", maxLabel: "100 = 熱到融化想移民去北極" },
+
+      // 🎬 娛樂與潮流
+      { category: "🎬 娛樂與潮流", title: "動漫/電影入面最強嘅角色或招式", minLabel: "1 = 路人甲一拳即暈", maxLabel: "100 = 毀天滅地宇宙最強" },
+      { category: "🎬 娛樂與潮流", title: "唱 K 必點嘅經典廣東歌", minLabel: "1 = 播親大家都去廁所", maxLabel: "100 = 前奏一響全場大合唱" },
+      { category: "🎬 娛樂與潮流", title: "桌遊/電子遊戲嘅刺激程度", minLabel: "1 = 玩三分鐘即刻眼瞓", maxLabel: "100 = 心跳加速嗌破喉嚨" },
+      { category: "🎬 娛樂與潮流", title: "知名歷史人物或名人嘅知名度", minLabel: "1 = 只有專家先識", maxLabel: "100 = 三歲細路都聽過佢個名" },
+      { category: "🎬 娛樂與潮流", title: "去旅行最想去嘅國家或城市", minLabel: "1 = 貼錢都未必想去", maxLabel: "100 = 人生必去夢想清單第一位" },
+      { category: "🎬 娛樂與潮流", title: "運動項目嘅體力消耗程度", minLabel: "1 = 坐喺度連汗都唔出", maxLabel: "100 = 玩完五分鐘即刻見耶穌" },
+
+      // 😂 腦洞與幻想
+      { category: "😂 腦洞與幻想", title: "如果流落荒島最想帶嘅一件嘢", minLabel: "1 = 毫無用處純粹阻埞", maxLabel: "100 = 荒島求生神器" },
+      { category: "😂 腦洞與幻想", title: "最想擁有嘅超能力", minLabel: "1 = 廢到唔好意思同人講", maxLabel: "100 = 改變世界無敵神技" },
+      { category: "😂 腦洞與幻想", title: "各種動物/昆蟲嘅可怕程度", minLabel: "1 = 可愛到想抱住瞓", maxLabel: "100 = 見到一隻即刻棄屋逃走" },
+      { category: "😂 腦洞與幻想", title: "中咗六合彩頭獎最想做嘅事", minLabel: "1 = 聽日照常搭巴士返工", maxLabel: "100 = 極致奢華夢想成真" },
+      { category: "😂 腦洞與幻想", title: "世界末日喪屍爆發時最有用嘅武器", minLabel: "1 = 拎上手即刻送頭", maxLabel: "100 = 一夫當關萬夫莫敵" },
+      { category: "😂 腦洞與幻想", title: "由細到大聽過最難忘嘅一句說話", minLabel: "1 = 左耳入右耳出", maxLabel: "100 = 刻骨銘心記一世" },
+      { category: "🍽️ 飲食日常", title: "便利店最值得買嘅宵夜", minLabel: "1 = 行過都唔會攞", maxLabel: "100 = 放工必入去掃一轉" },
+      { category: "🍽️ 飲食日常", title: "奶茶嘅甜度", minLabel: "1 = 走甜都仲嫌甜", maxLabel: "100 = 正常甜先叫奶茶" },
+      { category: "🍽️ 飲食日常", title: "早餐店最穩陣嘅選擇", minLabel: "1 = 試過一次就唔再叫", maxLabel: "100 = 成世早餐都係佢" },
+      { category: "🍽️ 飲食日常", title: "自助餐最應該留肚食嘅嘢", minLabel: "1 = 食兩口就飽", maxLabel: "100 = 可以為佢再食多三碟" },
+      { category: "⛪ 團契與生活", title: "聚會最怕嘅環節", minLabel: "1 = 最期待呢part", maxLabel: "100 = 聽到已經想遁地" },
+      { category: "⛪ 團契與生活", title: "小組分享嘅投入程度", minLabel: "1 = 聽完就忘", maxLabel: "100 = 想即刻寫低再傾多陣" },
+      { category: "⛪ 團契與生活", title: "退修營夜晚最想做嘅事", minLabel: "1 = 十點前要瞓", maxLabel: "100 = 傾到天光都得" },
+      { category: "⛪ 團契與生活", title: "群組訊息有幾想回", minLabel: "1 = 已讀不回", maxLabel: "100 = 即刻打一大段" },
+      { category: "🎬 娛樂與潮流", title: "煲劇一晚可以追幾多", minLabel: "1 = 睇個片頭就瞓", maxLabel: "100 = 通宵追完整季" },
+      { category: "🎬 娛樂與潮流", title: "去戲院有幾值得", minLabel: "1 = 喺屋企睇都一樣", maxLabel: "100 = 首映都要霸位" },
+      { category: "🎬 娛樂與潮流", title: "影相出限動嘅慾望", minLabel: "1 = 影完自己睇", maxLabel: "100 = 而家就要出" },
+      { category: "🎬 娛樂與潮流", title: "演唱會有幾想搶飛", minLabel: "1 = 直播睇下就算", maxLabel: "100 = 通宵刷新都要張飛" },
+      { category: "🎬 娛樂與潮流", title: "保齡或者桌球有幾想玩", minLabel: "1 = 企喺度睇人玩", maxLabel: "100 = 而家就想開波" },
+      { category: "🎬 娛樂與潮流", title: "睇緊嘅賽事有幾緊張", minLabel: "1 = 平靜如水", maxLabel: "100 = 喊完又笑" },
+      { category: "😂 腦洞與幻想", title: "如果可以同一個人食飯，你想約邊個", minLabel: "1 = 隔籬枱都唔想打招呼", maxLabel: "100 = 請一日假都要赴約" },
+      { category: "😂 腦洞與幻想", title: "時光機最想返去邊種日子", minLabel: "1 = 尋日都懶得返", maxLabel: "100 = 寧願留喺嗰一日" },
+      { category: "😂 腦洞與幻想", title: "如果可以變動物一日，你想變咩", minLabel: "1 = 變完都係瞓覺", maxLabel: "100 = 變完唔想變返人" },
+      { category: "😂 腦洞與幻想", title: "屋企突然多咗一間房，你想點用", minLabel: "1 = 堆雜物就算", maxLabel: "100 = 即刻裝修做夢想空間" },
+      { category: "😂 腦洞與幻想", title: "一世只可以食一種食物", minLabel: "1 = 食一日就厭", maxLabel: "100 = 食到老都唔悶" },
+      { category: "😂 腦洞與幻想", title: "一個願望，但會有少少副作用", minLabel: "1 = 副作用大過願望", maxLabel: "100 = 副作用都甘願" },
+      { category: "🚌 出街交通", title: "塞車有幾激氣", minLabel: "1 = 聽吓歌就算", maxLabel: "100 = 想落車自己行" },
+      { category: "🚌 出街交通", title: "等巴士嘅耐性", minLabel: "1 = 兩分鐘就叫車", maxLabel: "100 = 等多耐都企到" },
+      { category: "🚌 出街交通", title: "落雨冇帶遮有幾慘", minLabel: "1 = 淋雨好浪漫", maxLabel: "100 = 成身濕透想喊" },
+      { category: "🚌 出街交通", title: "呢條路有幾易蕩失", minLabel: "1 = 閉住眼都識行", maxLabel: "100 = 轉一個彎就迷路" },
+      { category: "🚌 出街交通", title: "趕尾班車有幾緊張", minLabel: "1 = 時間多嘅是", maxLabel: "100 = 跑緊最後一秒" },
+      { category: "🚌 出街交通", title: "地鐵迫到幾辛苦", minLabel: "1 = 仲有位揸扶手", maxLabel: "100 = 吸都吸唔到氣" },
+      { category: "🚌 出街交通", title: "熱天行街有幾辛苦", minLabel: "1 = 影相都仲有力", maxLabel: "100 = 行到想融咗" },
+      { category: "🚌 出街交通", title: "呢個地方有幾值得特意去", minLabel: "1 = 路過都唔想停", maxLabel: "100 = 請一日假都要去" },
+      { category: "🌤️ 天氣季節", title: "而家個天有幾熱", minLabel: "1 = 仲想行多陣", maxLabel: "100 = 行一步一身汗" },
+      { category: "🌤️ 天氣季節", title: "冷天有幾想留喺被度", minLabel: "1 = 仲想出街", maxLabel: "100 = 成日都唔好叫我" },
+      { category: "🌤️ 天氣季節", title: "落雨有幾影響心情", minLabel: "1 = 完全冇感覺", maxLabel: "100 = 成個人都悶" },
+      { category: "🌤️ 天氣季節", title: "颱風日有幾想放假", minLabel: "1 = 照樣出門", maxLabel: "100 = 希望而家宣佈停課" },
+      { category: "🌤️ 天氣季節", title: "夏天飲凍嘢嘅需要", minLabel: "1 = 熱水都得", maxLabel: "100 = 冇冰就頂唔住" },
+      { category: "🌤️ 天氣季節", title: "秋天有幾適合出街", minLabel: "1 = 邊個季節都一樣", maxLabel: "100 = 而家唔出就浪費" },
+      { category: "🌤️ 天氣季節", title: "濕度高有幾難頂", minLabel: "1 = 冇感覺", maxLabel: "100 = 成身黏立立" },
+      { category: "🌤️ 天氣季節", title: "換季喉嚨有幾唔舒服", minLabel: "1 = 完全無事", maxLabel: "100 = 把聲已經沙晒" }
+    ];
+
+    /********************************************************************
+     * 2. SOUND SYNTHESIZER (WEB AUDIO API - ZERO EXTERNAL MP3)
+     ********************************************************************/
+    const SoundFX = {
+      ctx: null,
+      init() {
+        if (!this.ctx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) this.ctx = new AudioCtx();
+        }
+      },
+      playTone(freq, type = "sine", duration = 0.15, delay = 0) {
+        try {
+          this.init();
+          if (!this.ctx) return;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, this.ctx.currentTime + delay);
+          gain.gain.setValueAtTime(0.18, this.ctx.currentTime + delay);
+          gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + delay + duration);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(this.ctx.currentTime + delay);
+          osc.stop(this.ctx.currentTime + delay + duration);
+        } catch (e) {}
+      },
+      click() { this.playTone(520, "triangle", 0.08); },
+      deal() {
+        this.playTone(440, "sine", 0.1, 0);
+        this.playTone(554, "sine", 0.1, 0.08);
+        this.playTone(659, "sine", 0.16, 0.16);
+      },
+      safe() {
+        this.playTone(587.33, "triangle", 0.12, 0);
+        this.playTone(880, "triangle", 0.25, 0.1);
+      },
+      fail() {
+        this.playTone(220, "sawtooth", 0.22, 0);
+        this.playTone(164.81, "sawtooth", 0.35, 0.18);
+      },
+      victory() {
+        [523.25, 659.25, 783.99, 1046.5].forEach((f, idx) => {
+          this.playTone(f, "triangle", 0.22, idx * 0.11);
+        });
+      }
+    };
+
+    /********************************************************************
+     * 3. CLIENT STATE & MULTI-DEVICE SYNC ENGINE (MODE C + FALLBACK)
+     ********************************************************************/
+    const STORAGE_KEY = "ITO_FELLOWSHIP_STATE_V1";
+    const urlParams = new URLSearchParams(window.location.search);
+
+    let viewRole = urlParams.get("role") === "player" ? "PLAYER" : "HOST";
+    let roomCode = (urlParams.get("room") || localStorage.getItem("ito_room_code") || String(Math.floor(1000 + Math.random() * 9000))).toUpperCase();
+    let playerId = localStorage.getItem("ito_player_id") || ("p_" + Math.random().toString(36).slice(2, 9));
+    let playerName = localStorage.getItem("ito_player_name") || "";
+    let workerUrl = urlParams.get("worker") || localStorage.getItem("ito_worker_url") || "";
+    let hostPeekEnabled = false;
+    let peekingCardIds = new Set();
+
+    localStorage.setItem("ito_room_code", roomCode);
+    localStorage.setItem("ito_player_id", playerId);
+    if (workerUrl) localStorage.setItem("ito_worker_url", workerUrl);
+
+    let topicBank = DEFAULT_TOPICS;
+    try {
+      const savedTopics = JSON.parse(localStorage.getItem("ito_custom_topics") || "null");
+      if (Array.isArray(savedTopics) && savedTopics.length > 0) topicBank = savedTopics;
+    } catch (e) {}
+    let selectedCategory = "全部";
+
+    let appState = {
+      roomCode: roomCode,
+      status: "LOBBY",
+      mode: "KUMONOITO",
+      level: 1,
+      cardsPerPlayer: 1,
+      maxLives: 5,
+      lives: 5,
+      topic: topicBank[0],
+      players: {},
+      lineup: [],
+      revealIndex: -1
+    };
+
+    let ws = null;
+    let activeSocket = null;
+    let socketGen = 0;
+    let retryCount = 0;
+    let retryTimer = null;
+    let broadcastChannel = null;
+
+    function initSyncEngine() {
+      // 1. Setup Local BroadcastChannel for instant multi-tab preview
+      if ("BroadcastChannel" in window) {
+        broadcastChannel = new BroadcastChannel("ito_room_" + roomCode);
+        broadcastChannel.onmessage = (ev) => {
+          if (ev.data && ev.data.type === "LOCAL_STATE_SYNC" && !ws) {
+            appState = ev.data.state;
+            renderAll();
+          }
+        };
+      }
+
+      // Load saved state if in local mode
+      const saved = localStorage.getItem(STORAGE_KEY + "_" + roomCode);
+      if (saved && !ws) {
+        try { appState = JSON.parse(saved); } catch (e) {}
+      }
+
+      // 2. Connect to Cloudflare Worker Durable Object if workerUrl is configured or same-origin /ws exists
+      connectWebSocket();
+      renderAll();
+    }
+
+    function buildWsUrl() {
+      const query = `/ws?room=${encodeURIComponent(roomCode)}&playerId=${encodeURIComponent(playerId)}&name=${encodeURIComponent(playerName || "團友")}&host=${viewRole === "HOST" ? "1" : "0"}`;
+      if (workerUrl) {
+        return workerUrl.replace(/^http/, "ws").replace(/\/$/, "") + query;
+      }
+      if (window.location.protocol.startsWith("http") && !window.location.hostname.includes("github.io")) {
+        const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
+        return `${proto}//${window.location.host}${query}`;
+      }
+      return "";
+    }
+
+    let heardServer = false;
+
+    function noteRemoteChanges(prev, next) {
+      if (!heardServer) {
+        heardServer = true;
+        return;
+      }
+      if (!prev || !next) return;
+      const oldCards = new Map((prev.lineup || []).map(card => [card.cardId, card]));
+      let revealedNow = false;
+      for (const card of (next.lineup || [])) {
+        const old = oldCards.get(card.cardId);
+        if (card.revealed && (!old || !old.revealed)) {
+          revealedNow = true;
+          if (card.status === "FAIL") SoundFX.fail();
+          else SoundFX.safe();
+        }
+      }
+      if (!revealedNow && prev.status !== "ROUND_END" && next.status === "ROUND_END") SoundFX.victory();
+      if (prev.status !== "PLAYING" && next.status === "PLAYING") SoundFX.deal();
+    }
+
+    function scheduleReconnect() {
+      clearTimeout(retryTimer);
+      const delay = Math.min(8000, 600 * (2 ** retryCount));
+      retryCount += 1;
+      retryTimer = setTimeout(connectWebSocket, delay);
+    }
+
+    function connectWebSocket() {
+      clearTimeout(retryTimer);
+      const targetWsUrl = buildWsUrl();
+      const gen = ++socketGen;
+      ws = null;
+      if (activeSocket) {
+        try { activeSocket.close(); } catch (e) {}
+        activeSocket = null;
+      }
+
+      if (!targetWsUrl) {
+        updateConnStatus("🟢 本地即時同步模式（可隨時於 QR Code 設定填入 Cloudflare Worker 網址）");
+        return;
+      }
+
+      updateConnStatus("🟡 正在連接房間…");
+      try {
+        const socket = new WebSocket(targetWsUrl);
+        activeSocket = socket;
+        socket.onopen = () => {
+          if (gen !== socketGen) {
+            try { socket.close(); } catch (e) {}
+            return;
+          }
+          ws = socket;
+          retryCount = 0;
+          updateConnStatus(`🟢 已連線即時同步（房號: ${roomCode}）`);
+        };
+        socket.onmessage = (event) => {
+          if (gen !== socketGen) return;
+          try {
+            const data = JSON.parse(event.data);
+            if (data.type === "ERROR" && data.message) {
+              updateConnStatus("⚠️ " + data.message);
+              return;
+            }
+            if (data.type === "STATE_UPDATE" && data.state) {
+              noteRemoteChanges(appState, data.state);
+              appState = data.state;
+              renderAll();
+            }
+          } catch (e) {}
+        };
+        socket.onclose = () => {
+          if (gen !== socketGen) return;
+          ws = null;
+          activeSocket = null;
+          updateConnStatus("🟡 連線中斷，重新連接中…畫面會保留住。");
+          scheduleReconnect();
+        };
+        socket.onerror = () => {
+          if (gen !== socketGen) return;
+          updateConnStatus("🟡 連唔上伺服器，會再試。");
+        };
+      } catch (err) {
+        ws = null;
+        scheduleReconnect();
+      }
+    }
+
+    function updateConnStatus(text) {
+      const el = document.getElementById("connStatusText");
+      if (el) el.textContent = text;
+    }
+
+    /********************************************************************
+     * 4. UNIFIED ACTION DISPATCHER (WORKS ON CLOUDFLARE DO & LOCAL)
+     ********************************************************************/
+    function sendAction(payload) {
+      SoundFX.click();
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify(payload));
+        return;
+      }
+      if (activeSocket && activeSocket.readyState === WebSocket.CONNECTING) {
+        updateConnStatus("🟡 連緊線，請等一秒再撳。");
+        return;
+      }
+      handleLocalAction(payload);
+    }
+
+    function shuffleDeckLocal() {
+      const deck = Array.from({ length: 100 }, (_, i) => i + 1);
+      for (let i = deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]];
+      }
+      return deck;
+    }
+
+    function handleLocalAction(msg) {
+      switch (msg.action) {
+        case "SET_CONFIG":
+          if (msg.mode) appState.mode = msg.mode;
+          if (typeof msg.maxLives === "number") {
+            appState.maxLives = msg.maxLives;
+            appState.lives = msg.maxLives;
+          }
+          if (typeof msg.cardsPerPlayer === "number") appState.cardsPerPlayer = msg.cardsPerPlayer;
+          if (msg.topic) appState.topic = msg.topic;
+          break;
+
+        case "SET_TOPIC":
+          if (msg.topic) appState.topic = msg.topic;
+          break;
+
+        case "START_ROUND": {
+          if (appState.lives <= 0) appState.lives = appState.maxLives || 5;
+          if (typeof msg.level === "number") appState.level = msg.level;
+          if (typeof msg.cardsPerPlayer === "number") appState.cardsPerPlayer = Math.max(1, Math.min(3, msg.cardsPerPlayer));
+          if (msg.topic) appState.topic = msg.topic;
+          if (Object.keys(appState.players).length === 0) {
+            // Auto-create 4 sample players if room is empty so host can test immediately
+            ["團友 A", "團友 B", "團友 C", "團友 D"].forEach((n, idx) => {
+              const pid = "local_p" + (idx + 1);
+              appState.players[pid] = { id: pid, name: n, online: true, hand: [] };
+            });
+          }
+          const deck = shuffleDeckLocal();
+          let idx = 0;
+          appState.lineup = [];
+          appState.revealIndex = -1;
+          appState.status = "PLAYING";
+          for (const p of Object.values(appState.players)) {
+            p.hand = [];
+            for (let c = 0; c < appState.cardsPerPlayer; c++) {
+              p.hand.push({
+                cardId: `${p.id}_c${c}_${Date.now()}`,
+                number: deck[idx++],
+                clue: "",
+                submitted: false
+              });
+            }
+          }
+          SoundFX.deal();
+          break;
+        }
+
+        case "SUBMIT_CARD": {
+          const pid = msg.playerId || playerId;
+          if (!appState.players[pid]) {
+            appState.players[pid] = { id: pid, name: playerName || "團友", online: true, hand: [{ cardId: "c_" + Date.now(), number: Math.floor(1 + Math.random() * 100), clue: "", submitted: false }] };
+          }
+          const p = appState.players[pid];
+          const card = p.hand.find(c => c.cardId === msg.cardId) || p.hand[0];
+          if (!card) break;
+          card.clue = (msg.clue || "").trim() || "（口頭形容）";
+          card.submitted = true;
+          const exist = appState.lineup.findIndex(i => i.cardId === card.cardId);
+          if (exist >= 0) {
+            appState.lineup[exist].clue = card.clue;
+          } else {
+            appState.lineup.push({
+              cardId: card.cardId,
+              playerId: p.id,
+              playerName: p.name,
+              number: card.number,
+              clue: card.clue,
+              revealed: false,
+              status: "PENDING"
+            });
+          }
+          break;
+        }
+
+        case "MOVE_CARD": {
+          const { fromIndex, toIndex } = msg;
+          const list = appState.lineup;
+          if (fromIndex >= 0 && fromIndex < list.length && toIndex >= 0 && toIndex < list.length) {
+            const [m] = list.splice(fromIndex, 1);
+            list.splice(toIndex, 0, m);
+          }
+          break;
+        }
+
+        case "FORCE_ADD_UNSUBMITTED": {
+          for (const p of Object.values(appState.players)) {
+            for (const card of (p.hand || [])) {
+              if (!appState.lineup.some(i => i.cardId === card.cardId)) {
+                card.submitted = true;
+                card.clue = card.clue || "（口頭形容）";
+                appState.lineup.push({
+                  cardId: card.cardId,
+                  playerId: p.id,
+                  playerName: p.name,
+                  number: card.number,
+                  clue: card.clue,
+                  revealed: false,
+                  status: "PENDING"
+                });
+              }
+            }
+          }
+          break;
+        }
+
+        case "REVEAL_NEXT": {
+          if (appState.lineup.length === 0) break;
+          appState.status = "REVEALING";
+          const nextIdx = appState.lineup.findIndex(i => !i.revealed);
+          if (nextIdx === -1) {
+            appState.status = "ROUND_END";
+            SoundFX.victory();
+            break;
+          }
+          const cur = appState.lineup[nextIdx];
+          cur.revealed = true;
+          appState.revealIndex = nextIdx;
+
+          if (appState.mode === "KUMONOITO") {
+            let maxPrev = -1;
+            for (let i = 0; i < nextIdx; i++) {
+              if (appState.lineup[i].number > maxPrev) maxPrev = appState.lineup[i].number;
+            }
+            if (cur.number >= maxPrev) {
+              cur.status = "SAFE";
+              SoundFX.safe();
+            } else {
+              cur.status = "FAIL";
+              appState.lives = Math.max(0, appState.lives - 1);
+              SoundFX.fail();
+            }
+          } else {
+            cur.status = "SAFE";
+            SoundFX.safe();
+          }
+
+          if (appState.lives <= 0) {
+            appState.status = "GAME_OVER";
+          } else if (appState.lineup.every(i => i.revealed)) {
+            appState.status = "ROUND_END";
+            SoundFX.victory();
+          }
+          break;
+        }
+
+        case "ADJUST_LIVES":
+          appState.lives = Math.max(0, Math.min(10, appState.lives + (msg.delta || 0)));
+          break;
+
+        case "ADD_BOT": {
+          const bid = "bot_" + Math.random().toString(36).slice(2, 7);
+          const count = Object.keys(appState.players).length + 1;
+          const sampleClues = ["梳打餅", "譚仔三小", "M記麥樂雞", "日本A5和牛", "珍奶少甜", "清湯腩", "法國大餐", "杯麵"];
+          const rndNum = Math.floor(1 + Math.random() * 100);
+          appState.players[bid] = {
+            id: bid,
+            name: `團友 ${count}號`,
+            online: true,
+            hand: [{
+              cardId: `${bid}_c0`,
+              number: rndNum,
+              clue: sampleClues[count % sampleClues.length],
+              submitted: false
+            }]
+          };
+          break;
+        }
+
+        case "REMOVE_PLAYER":
+          if (msg.playerId) {
+            delete appState.players[msg.playerId];
+            appState.lineup = appState.lineup.filter(i => i.playerId !== msg.playerId);
+          }
+          break;
+
+        case "RESET_GAME":
+          appState.status = "LOBBY";
+          appState.level = 1;
+          appState.lives = appState.maxLives;
+          appState.lineup = [];
+          for (const p of Object.values(appState.players)) p.hand = [];
+          break;
+      }
+
+      localStorage.setItem(STORAGE_KEY + "_" + roomCode, JSON.stringify(appState));
+      if (broadcastChannel) {
+        broadcastChannel.postMessage({ type: "LOCAL_STATE_SYNC", state: appState });
+      }
+      renderAll();
+    }
+
+    function triggerRevealNext() {
+      sendAction({ action: "REVEAL_NEXT" });
+    }
+
+    function startNewRound() {
+      const nextLevel = appState.status === "ROUND_END" ? (appState.level || 1) + 1 : (appState.level || 1);
+      sendAction({
+        action: "START_ROUND",
+        level: nextLevel,
+        cardsPerPlayer: appState.cardsPerPlayer,
+        topic: appState.topic
+      });
+    }
+
+    /********************************************************************
+     * 5. UI RENDERING ENGINE
+     ********************************************************************/
+    function switchViewRole(role) {
+      viewRole = role;
+      const hostSec = document.getElementById("hostViewSection");
+      const playerSec = document.getElementById("playerViewSection");
+      const btnHost = document.getElementById("btnSwitchHost");
+      const btnPlayer = document.getElementById("btnSwitchPlayer");
+
+      if (role === "HOST") {
+        hostSec.classList.remove("hidden");
+        playerSec.classList.add("hidden");
+        btnHost.className = "flex-1 md:flex-none pill-btn px-5 py-2.5 font-black text-sm shadow-md bg-[#E63E7A] text-white ring-4 ring-pink-200";
+        btnPlayer.className = "flex-1 md:flex-none pill-btn px-5 py-2.5 font-black text-sm shadow-md bg-gray-200 text-[#4A3222]";
+      } else {
+        hostSec.classList.add("hidden");
+        playerSec.classList.remove("hidden");
+        btnPlayer.className = "flex-1 md:flex-none pill-btn px-5 py-2.5 font-black text-sm shadow-md bg-[#1EA1E8] text-white ring-4 ring-blue-200";
+        btnHost.className = "flex-1 md:flex-none pill-btn px-5 py-2.5 font-black text-sm shadow-md bg-gray-200 text-[#4A3222]";
+      }
+      renderAll();
+    }
+
+    function renderAll() {
+      document.getElementById("navRoomBadge").textContent = `房號: ${roomCode}`;
+      document.getElementById("mobileRoomCodeLabel").textContent = roomCode;
+      document.getElementById("qrRoomCodeBig").textContent = roomCode;
+
+      // Mode & Level Badges
+      const isAkaiito = appState.mode === "AKAIITO";
+      document.getElementById("hostModeBadge").textContent = isAkaiito ? "🧶 紅線配對・雙人湊百" : "🕸️ 蛛絲馬跡・合作排序";
+      document.getElementById("hostLevelBadge").textContent = `🎯 第 ${appState.level} 關（每人 ${appState.cardsPerPlayer} 張卡）`;
+      const modeSel = document.getElementById("configModeSelect");
+      const cardsSel = document.getElementById("configCardsSelect");
+      const livesSel = document.getElementById("configLivesSelect");
+      if (modeSel && document.activeElement !== modeSel && appState.mode) modeSel.value = appState.mode;
+      if (cardsSel && document.activeElement !== cardsSel) cardsSel.value = String(appState.cardsPerPlayer || 1);
+      if (livesSel && document.activeElement !== livesSel && ["3", "5", "8"].includes(String(appState.maxLives))) {
+        livesSel.value = String(appState.maxLives);
+      }
+      document.getElementById("trackHeaderTitle").textContent = isAkaiito
+        ? "🧶 紅線配對軌道（每 2 張一組，目標兩張相加最接近 100！）"
+        : "🛤️ 命懸一線排序軌道（由細至大 1 ➔ 100）";
+
+      // Hearts
+      const heartsHtml = "❤️".repeat(appState.lives) + "🖤".repeat(Math.max(0, appState.maxLives - appState.lives));
+      document.getElementById("heartsContainer").textContent = heartsHtml || "💀 命懸一線失敗！";
+
+      // Topic Display
+      if (appState.topic) {
+        document.getElementById("topicCategoryTag").textContent = appState.topic.category;
+        document.getElementById("topicTitleDisplay").textContent = `「${appState.topic.title}」`;
+        document.getElementById("topicMinDisplay").textContent = appState.topic.minLabel;
+        document.getElementById("topicMaxDisplay").textContent = appState.topic.maxLabel;
+
+        document.getElementById("mobileTopicCat").textContent = appState.topic.category;
+        document.getElementById("mobileTopicTitle").textContent = `「${appState.topic.title}」`;
+        document.getElementById("mobileTopicMin").textContent = appState.topic.minLabel;
+        document.getElementById("mobileTopicMax").textContent = appState.topic.maxLabel;
+      }
+
+      renderLineupTrack();
+      renderPlayersBar();
+      renderMobileHand();
+      renderHostPlayerManager();
+      updateQrModalInfo();
+    }
+
+    function renderLineupTrack() {
+      const container = document.getElementById("lineupTrackContainer");
+      const list = appState.lineup || [];
+
+      if (list.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full flex flex-col items-center justify-center py-12 text-center text-white space-y-3">
+            <div class="text-5xl">🕸️</div>
+            <p class="text-xl md:text-2xl font-black">等待團友出牌上軌道...</p>
+            <p class="text-sm font-bold opacity-90">主持可撳右上角「🃏 派發新一局手牌」，團友喺手機輸入形容詞後卡牌就會即時出現喺呢度！</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = list.map((item, idx) => {
+        const isRevealed = item.revealed;
+        const showNumber = isRevealed || hostPeekEnabled;
+        const displayNum = item.number ?? item.hostPeekNumber ?? "❓";
+
+        let cardBorder = "border-white";
+        let badgeBg = "bg-[#0D74B8] text-white";
+        let numBoxBg = "bg-gray-100 text-[#4A3222]";
+
+        if (isRevealed) {
+          if (item.status === "SAFE") {
+            cardBorder = "border-[#5CB346] ring-4 ring-[#5CB346]/40";
+            badgeBg = "bg-[#5CB346] text-white";
+            numBoxBg = "bg-[#5CB346] text-white";
+          } else if (item.status === "FAIL") {
+            cardBorder = "border-[#EA6A00] ring-4 ring-[#EA6A00]/50 animate-shake";
+            badgeBg = "bg-[#EA6A00] text-white";
+            numBoxBg = "bg-[#EA6A00] text-white";
+          }
+        }
+
+        // Red Thread pair indicator for AKAIITO mode
+        let pairTag = "";
+        if (appState.mode === "AKAIITO") {
+          const pairNum = Math.floor(idx / 2) + 1;
+          const partnerIdx = idx % 2 === 0 ? idx + 1 : idx - 1;
+          const partner = list[partnerIdx];
+          if (isRevealed && partner && partner.revealed && (item.number || item.hostPeekNumber) && (partner.number || partner.hostPeekNumber)) {
+            const sum = (item.number || item.hostPeekNumber) + (partner.number || partner.hostPeekNumber);
+            pairTag = `<span class="text-xs px-2 py-0.5 rounded-full bg-pink-100 text-[#E63E7A] font-black">第 ${pairNum} 組 (合共: ${sum})</span>`;
+          } else {
+            pairTag = `<span class="text-xs px-2 py-0.5 rounded-full bg-pink-100 text-[#E63E7A] font-black">🧶 紅線第 ${pairNum} 組</span>`;
+          }
+        }
+
+        return `
+          <div class="game-card p-5 border-4 ${cardBorder} flex flex-col justify-between space-y-3 animate-pop">
+            <div class="flex items-center justify-between gap-2">
+              <span class="px-3 py-1 rounded-full ${badgeBg} font-black text-xs">
+                第 ${idx + 1} 位 ${idx === 0 ? "(最細)" : idx === list.length - 1 ? "(最大)" : ""}
+              </span>
+              ${pairTag}
+            </div>
+
+            <div class="space-y-1">
+              <div class="text-sm font-bold text-[#916E57] flex items-center gap-1">
+                👤 <span class="font-black text-[#4A3222] text-base">${escapeHtml(item.playerName)}</span>
+              </div>
+              <div class="p-3 rounded-2xl bg-amber-50 border-2 border-[#F3C242] font-black text-lg md:text-xl text-[#4A3222] break-words">
+                💬「${escapeHtml(item.clue)}」
+              </div>
+            </div>
+
+            <div class="py-4 rounded-2xl ${numBoxBg} text-center font-black text-3xl md:text-4xl shadow-inner">
+              ${showNumber ? displayNum : "🔒 秘密數字"}
+            </div>
+
+            <div class="flex items-center justify-between gap-2 pt-1">
+              <button onclick="sendAction({action:'MOVE_CARD', fromIndex:${idx}, toIndex:${idx - 1}})"
+                ${idx === 0 ? "disabled" : ""}
+                class="flex-1 pill-btn py-2 bg-gray-100 hover:bg-gray-200 disabled:opacity-30 font-black text-sm">
+                ◀ 移左 (較細)
+              </button>
+              <button onclick="sendAction({action:'MOVE_CARD', fromIndex:${idx}, toIndex:${idx + 1}})"
+                ${idx === list.length - 1 ? "disabled" : ""}
+                class="flex-1 pill-btn py-2 bg-gray-100 hover:bg-gray-200 disabled:opacity-30 font-black text-sm">
+                移右 (較大) ▶
+              </button>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderPlayersBar() {
+      const players = Object.values(appState.players || {});
+      document.getElementById("playerCountBadge").textContent = `${players.length} 人`;
+      const container = document.getElementById("playersListContainer");
+
+      if (players.length === 0) {
+        container.innerHTML = `<span class="text-sm text-gray-500 font-bold">暫時未有團友入房，請撳「📱 QR Code」或「➕ 加入測試團友」開始！</span>`;
+        return;
+      }
+
+      container.innerHTML = players.map(p => {
+        const submittedCount = (p.hand || []).filter(c => c.submitted).length;
+        const totalCards = (p.hand || []).length;
+        const statusColor = submittedCount > 0 && submittedCount === totalCards ? "bg-[#5CB346]" : "bg-[#0D74B8]";
+        return `
+          <div class="px-3.5 py-1.5 rounded-full ${statusColor} text-white font-bold text-xs md:text-sm flex items-center gap-2 shadow">
+            <span>${p.online !== false ? "🟢" : "⚪"} ${escapeHtml(p.name)}</span>
+            ${totalCards > 0 ? `<span class="bg-white/25 px-2 py-0.5 rounded-full text-[11px]">${submittedCount}/${totalCards} 已出牌</span>` : ""}
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderMobileHand() {
+      const nameInput = document.getElementById("playerNameInput");
+      if (nameInput && !nameInput.value && playerName) {
+        nameInput.value = playerName;
+      }
+
+      const handContainer = document.getElementById("mobileHandContainer");
+      const typing = document.activeElement;
+      const typingId = typing && typing.id && typing.id.startsWith("clueInput_") ? typing.id : "";
+      const typingDraft = typingId ? typing.value : "";
+      const typingPos = typingId ? typing.selectionStart : null;
+      const me = appState.players[playerId];
+      const myHand = (me && me.hand) ? me.hand : [];
+
+      if (myHand.length === 0) {
+        handContainer.innerHTML = `
+          <div class="game-card p-6 border-4 border-white text-center space-y-3">
+            <div class="text-4xl">🃏</div>
+            <h4 class="font-black text-lg">等待主持派發手牌...</h4>
+            <p class="text-xs text-gray-500 font-bold">確認已輸入名字並撳「確認入房」，當主持喺大螢幕撳「派發新一局手牌」時，你嘅秘密數字就會出現！</p>
+          </div>
+        `;
+      } else {
+        handContainer.innerHTML = myHand.map((card, idx) => {
+          const isPeeking = peekingCardIds.has(card.cardId);
+          return `
+            <div class="game-card p-5 border-4 border-[#E63E7A] space-y-4">
+              <div class="flex items-center justify-between">
+                <span class="px-3 py-1 rounded-full bg-[#E63E7A] text-white font-black text-xs">
+                  🃏 你嘅秘密手牌 #${idx + 1}
+                </span>
+                <span class="text-xs font-black ${card.submitted ? 'text-[#5CB346]' : 'text-[#EA6A00]'}">
+                  ${card.submitted ? "✅ 已放上大螢幕軌道" : "⏳ 未送出提示詞"}
+                </span>
+              </div>
+
+              <!-- HOLD TO PEEK SECRET NUMBER BOX -->
+              <div
+                onpointerdown="startPeekCard('${card.cardId}')"
+                onpointerup="stopPeekCard('${card.cardId}')"
+                onpointerleave="stopPeekCard('${card.cardId}')"
+                class="cursor-pointer rounded-3xl p-6 text-center transition-all border-4 ${isPeeking ? 'bg-[#F3C242] border-[#4A3222]' : 'bg-[#4A3222] border-white text-white'}">
+                <p class="text-xs font-bold mb-1 opacity-85">
+                  ${isPeeking ? "🤫 千祈唔好直接講個數字出嚟！" : "👆 按住唔放偷睇你嘅秘密數字 (1-100)"}
+                </p>
+                <div class="text-5xl font-black tracking-wider my-2">
+                  ${isPeeking ? (card.number ?? "❓") : "🙈 保密中"}
+                </div>
+              </div>
+
+              <!-- CLUE INPUT & SUBMIT -->
+              <div class="space-y-2">
+                <label class="block text-xs font-black text-[#4A3222]">💬 根據主題輸入你嘅形容詞（可隨時修改）：</label>
+                <div class="flex gap-2">
+                  <input id="clueInput_${card.cardId}" type="text" value="${escapeHtml(card.clue || '')}"
+                    placeholder="例如：譚仔三小 / 梳打餅..."
+                    class="flex-1 px-4 py-2.5 rounded-2xl border-2 border-gray-300 font-black text-sm focus:outline-none focus:border-[#E63E7A]" />
+                  <button onclick="submitMobileCard('${card.cardId}')" class="pill-btn px-5 py-2.5 bg-[#5CB346] text-white font-black text-sm shadow">
+                    🚀 出牌
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join("");
+        if (typingId) {
+          const again = document.getElementById(typingId);
+          if (again) {
+            again.value = typingDraft;
+            again.focus();
+            if (typingPos != null) again.setSelectionRange(typingPos, typingPos);
+          }
+        }
+      }
+
+      // Render Mobile Lineup Helper
+      const mobileLineup = document.getElementById("mobileLineupList");
+      const list = appState.lineup || [];
+      if (list.length === 0) {
+        mobileLineup.innerHTML = `<p class="text-xs text-gray-400 font-bold text-center py-3">場上暫時未有卡牌</p>`;
+      } else {
+        mobileLineup.innerHTML = list.map((item, idx) => `
+          <div class="flex items-center justify-between p-2.5 rounded-2xl bg-gray-50 border border-gray-200 text-xs font-bold">
+            <div class="truncate pr-2">
+              <span class="px-2 py-0.5 rounded-full bg-[#0D74B8] text-white font-black mr-1">#${idx + 1}</span>
+              <span class="font-black text-[#4A3222]">${escapeHtml(item.playerName)}：</span>
+              <span class="text-[#E63E7A]">「${escapeHtml(item.clue)}」</span>
+            </div>
+            <div class="flex items-center gap-1 shrink-0">
+              <button onclick="sendAction({action:'MOVE_CARD', fromIndex:${idx}, toIndex:${idx - 1}})" ${idx === 0 ? "disabled" : ""} class="px-2 py-1 rounded bg-gray-200 disabled:opacity-30">▲</button>
+              <button onclick="sendAction({action:'MOVE_CARD', fromIndex:${idx}, toIndex:${idx + 1}})" ${idx === list.length - 1 ? "disabled" : ""} class="px-2 py-1 rounded bg-gray-200 disabled:opacity-30">▼</button>
+            </div>
+          </div>
+        `).join("");
+      }
+    }
+
+    function startPeekCard(cardId) {
+      peekingCardIds.add(cardId);
+      renderMobileHand();
+    }
+
+    function stopPeekCard(cardId) {
+      if (peekingCardIds.has(cardId)) {
+        peekingCardIds.delete(cardId);
+        renderMobileHand();
+      }
+    }
+
+    function updatePlayerIdentity() {
+      const val = document.getElementById("playerNameInput").value.trim();
+      if (!val) return alert("請先輸入你嘅暱稱！");
+      playerName = val;
+      localStorage.setItem("ito_player_name", playerName);
+
+      if (buildWsUrl()) {
+        connectWebSocket();
+        return;
+      }
+
+      if (!appState.players[playerId]) {
+        appState.players[playerId] = {
+          id: playerId,
+          name: playerName,
+          online: true,
+          hand: []
+        };
+      } else {
+        appState.players[playerId].name = playerName;
+      }
+      localStorage.setItem(STORAGE_KEY + "_" + roomCode, JSON.stringify(appState));
+      if (broadcastChannel) broadcastChannel.postMessage({ type: "LOCAL_STATE_SYNC", state: appState });
+      renderAll();
+    }
+
+    function submitMobileCard(cardId) {
+      const input = document.getElementById("clueInput_" + cardId);
+      const clue = input ? input.value.trim() : "";
+      sendAction({ action: "SUBMIT_CARD", cardId, clue, playerId });
+    }
+
+    /********************************************************************
+     * 6. TOPIC BANK & HOST CONTROLS
+     ********************************************************************/
+    function pickRandomTopic() {
+      const pool = selectedCategory === "全部" ? topicBank : topicBank.filter(t => t.category === selectedCategory);
+      const next = pool[Math.floor(Math.random() * pool.length)] || topicBank[0];
+      sendAction({ action: "SET_TOPIC", topic: next });
+    }
+
+    function renderTopicBankModal() {
+      const categories = ["全部", ...new Set(topicBank.map(t => t.category))];
+      const catBar = document.getElementById("categoryFilterBar");
+      catBar.innerHTML = categories.map(cat => `
+        <button onclick="filterTopicCategory('${cat}')"
+          class="pill-btn px-3.5 py-1 text-xs font-black ${selectedCategory === cat ? 'bg-[#E63E7A] text-white' : 'bg-gray-200 text-[#4A3222]'}">
+          ${cat}
+        </button>
+      `).join("");
+
+      const filtered = selectedCategory === "全部" ? topicBank : topicBank.filter(t => t.category === selectedCategory);
+      const grid = document.getElementById("topicBankGrid");
+      grid.innerHTML = filtered.map((t, idx) => `
+        <div onclick="selectSpecificTopic(${idx})" class="cursor-pointer p-3 rounded-2xl border-2 border-gray-200 hover:border-[#E63E7A] bg-white transition flex flex-col justify-between">
+          <div>
+            <span class="text-[11px] font-black text-[#0D74B8]">${escapeHtml(t.category)}</span>
+            <h5 class="font-black text-sm text-[#4A3222] my-1">${escapeHtml(t.title)}</h5>
+          </div>
+          <div class="text-[11px] text-gray-500 font-bold flex justify-between">
+            <span>${escapeHtml(t.minLabel)}</span>
+            <span>↔</span>
+            <span>${escapeHtml(t.maxLabel)}</span>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function filterTopicCategory(cat) {
+      selectedCategory = cat;
+      renderTopicBankModal();
+    }
+
+    function selectSpecificTopic(filteredIdx) {
+      const filtered = selectedCategory === "全部" ? topicBank : topicBank.filter(t => t.category === selectedCategory);
+      const chosen = filtered[filteredIdx];
+      if (chosen) {
+        sendAction({ action: "SET_TOPIC", topic: chosen });
+        closeModal("topicModal");
+      }
+    }
+
+    function useCustomTopic() {
+      const title = document.getElementById("customTopicTitle").value.trim();
+      const minLabel = document.getElementById("customTopicMin").value.trim() || "1 = 最低程度";
+      const maxLabel = document.getElementById("customTopicMax").value.trim() || "100 = 最高程度";
+      if (!title) return alert("請輸入自訂題目名稱！");
+
+      const newTopic = { category: "✨ 自訂題庫", title, minLabel, maxLabel };
+      topicBank.unshift(newTopic);
+      localStorage.setItem("ito_custom_topics", JSON.stringify(topicBank));
+      sendAction({ action: "SET_TOPIC", topic: newTopic });
+      renderTopicBankModal();
+      closeModal("topicModal");
+    }
+
+    function applyHostConfig() {
+      const mode = document.getElementById("configModeSelect").value;
+      const cardsPerPlayer = parseInt(document.getElementById("configCardsSelect").value, 10) || 1;
+      const maxLives = parseInt(document.getElementById("configLivesSelect").value, 10) || 5;
+      sendAction({ action: "SET_CONFIG", mode, cardsPerPlayer, maxLives });
+    }
+
+    function exportTopicsJSON() {
+      const blob = new Blob([JSON.stringify(topicBank, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "ito-fellowship-topics.json";
+      a.click();
+    }
+
+    function importTopicsJSON(ev) {
+      const file = ev.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            topicBank = parsed;
+            localStorage.setItem("ito_custom_topics", JSON.stringify(topicBank));
+            renderTopicBankModal();
+            alert(`成功匯入 ${parsed.length} 條題目！`);
+          }
+        } catch (err) {
+          alert("JSON 格式不正確！");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function toggleHostPeek() {
+      hostPeekEnabled = !hostPeekEnabled;
+      document.getElementById("btnHostPeek").textContent = `👁️ 主持偷睇全場底牌: ${hostPeekEnabled ? "開" : "關"}`;
+      renderAll();
+    }
+
+    function changeRoomCodePrompt() {
+      const next = prompt("請輸入新嘅 4 位房號：", roomCode);
+      if (next && next.trim()) {
+        roomCode = next.trim().toUpperCase();
+        localStorage.setItem("ito_room_code", roomCode);
+        appState.roomCode = roomCode;
+        connectWebSocket();
+        renderAll();
+      }
+    }
+
+    function renderHostPlayerManager() {
+      const container = document.getElementById("hostPlayerManagerList");
+      if (!container) return;
+      const players = Object.values(appState.players || {});
+      if (players.length === 0) {
+        container.innerHTML = `<p class="text-xs text-gray-500">暫無團友名單</p>`;
+        return;
+      }
+      container.innerHTML = players.map(p => `
+        <div class="flex items-center justify-between bg-white p-2 rounded-xl border text-xs font-bold">
+          <span>👤 ${escapeHtml(p.name)}</span>
+          <button onclick="sendAction({action:'REMOVE_PLAYER', playerId:'${p.id}'})" class="px-2.5 py-1 rounded-lg bg-red-100 text-red-700 font-black">
+            移除
+          </button>
+        </div>
+      `).join("");
+    }
+
+    function updateQrModalInfo() {
+      const baseUrl = window.location.origin + window.location.pathname;
+      const joinUrl = `${baseUrl}?room=${encodeURIComponent(roomCode)}&role=player${workerUrl ? `&worker=${encodeURIComponent(workerUrl)}` : ""}`;
+      const urlText = document.getElementById("qrJoinUrlText");
+      const qrImg = document.getElementById("qrCodeImg");
+      const workerInput = document.getElementById("workerUrlInput");
+
+      if (urlText) urlText.textContent = joinUrl;
+      if (qrImg) {
+        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=10&data=${encodeURIComponent(joinUrl)}`;
+      }
+      if (workerInput && !workerInput.value && workerUrl) {
+        workerInput.value = workerUrl;
+      }
+    }
+
+    function saveWorkerUrlAndReconnect() {
+      const val = document.getElementById("workerUrlInput").value.trim();
+      workerUrl = val;
+      localStorage.setItem("ito_worker_url", workerUrl);
+      connectWebSocket();
+      updateQrModalInfo();
+    }
+
+    function copyJoinLink() {
+      const text = document.getElementById("qrJoinUrlText").textContent;
+      navigator.clipboard.writeText(text).then(() => alert("已複製團友入房連結！"));
+    }
+
+    function confirmResetGame() {
+      if (confirm("確定要重設本局進度並返回準備室嗎？")) {
+        sendAction({ action: "RESET_GAME" });
+      }
+    }
+
+    function openModal(id) {
+      if (id === "topicModal") renderTopicBankModal();
+      if (id === "qrModal") updateQrModalInfo();
+      const el = document.getElementById(id);
+      el.classList.remove("hidden");
+      el.classList.add("flex");
+    }
+
+    function closeModal(id) {
+      const el = document.getElementById(id);
+      el.classList.add("hidden");
+      el.classList.remove("flex");
+    }
+
+    function escapeHtml(str) {
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    /********************************************************************
+     * 7. IN-BROWSER ONE-CLICK PACKAGE EXPORTER FALLBACK
+     ********************************************************************/
+    function downloadDeploymentFile(filename) {
+      let content = "";
+      if (filename === "wrangler.toml") {
+        content = `name = "ito-game"\nmain = "worker.js"\ncompatibility_date = "2026-04-01"\n\n[durable_objects]\nbindings = [\n  { name = "ITO_ROOMS", class_name = "ItoRoom" }\n]\n\n[[migrations]]\ntag = "v1"\nnew_sqlite_classes = ["ItoRoom"]\n`;
+      } else if (filename === "README.md") {
+        content = `# Ito 命懸一線 (Mode C) - Grok Build From-Zero Deployment Runbook\n請參考對話中之完整 README.md 部署步驟將 index.html、worker.js 及 wrangler.toml 部署至 GitHub 與 Cloudflare Pages/Workers。`;
+      } else if (filename === "worker.js") {
+        content = `// 請直接複製對話中提供之完整 worker.js 程式碼部署至 Cloudflare Workers`;
+      }
+      const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+    }
+
+    // Initialize on load
+    window.addEventListener("DOMContentLoaded", () => {
+      switchViewRole(viewRole);
+      initSyncEngine();
+    });
+  </script>
+</body>
+</html>
